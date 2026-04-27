@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Topbar } from "@/components/topbar"
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -32,8 +33,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
-      <body>
-        <ThemeProvider>{children}</ThemeProvider>
+      <body className="flex flex-col min-h-screen bg-[#f5f0e8]">
+        <ThemeProvider>
+          <Topbar />
+          <main className="flex-1">{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   )
