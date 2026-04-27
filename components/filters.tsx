@@ -1,140 +1,38 @@
 "use client"
 
 import { useState } from "react"
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-type OccupancyView = "all" | "occupied" | "vacated"
-type VacatedSub = "any" | "early" | "late"
-
-interface FiltersState {
-  paymentStatus: string[]
-  occupancy: OccupancyView
-  vacatedSub: VacatedSub
-  officers: string[]
-  rent: string
-  owing: string
-  action: string
-}
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  ACTION_OPTIONS,
+  DEFAULT_FILTERS,
+  OCCUPANCY_OPTIONS,
+  OFFICERS,
+  OWING_OPTIONS,
+  PAYMENT_STATUS,
+  RENT_OPTIONS,
+  VACATED_CARDS,
+  type FiltersState,
+} from "@/lib/constants/filters"
 
 interface FiltersProps {
   readonly onFilterChange?: (filters: FiltersState) => void
 }
 
-// ── Static data ──────────────────────────────────────────────────────────────
-
-const PAYMENT_STATUS = [
-  { key: "current", label: "Current", color: "#3d5a3a", count: 92 },
-  { key: "1-30",    label: "1–30",    color: "#0f5e5a", count: 32 },
-  { key: "31-60",   label: "31–60",   color: "#b3610a", count: 8  },
-  { key: "61-90",   label: "61–90",   color: "#c57a3f", count: 9  },
-  { key: "90+",     label: "90+",     color: "#8a2a2a", count: 9  },
-]
-
-const OFFICERS = ["Kojo", "Esi", "Kofi", "Abena", "Yaw", "Ama"]
-
-const RENT_OPTIONS = [
-  { value: "all",         label: "All rent levels"    },
-  { value: "0-1000",      label: "Under ₵1,000"       },
-  { value: "1000-2500",   label: "₵1,000 – ₵2,500"   },
-  { value: "2500-4000",   label: "₵2,500 – ₵4,000"   },
-  { value: "4000-10000",  label: "Over ₵4,000"        },
-]
-
-const OWING_OPTIONS = [
-  { value: "all",         label: "All balances"           },
-  { value: "none",        label: "Paid up (nothing owed)" },
-  { value: "0-5000",      label: "Under ₵5,000"           },
-  { value: "5000-15000",  label: "₵5,000 – ₵15,000"      },
-  { value: "15000-99999", label: "Over ₵15,000"           },
-]
-
-const ACTION_OPTIONS = [
-  { value: "all",                   label: "Any action (or none)"           },
-  { value: "none",                  label: "No action taken yet"            },
-  { value: "landlord",              label: "Landlord contacted"             },
-  { value: "employer",              label: "Employer contacted"             },
-  { value: "visited",               label: "Visited"                        },
-  { value: "locked",                label: "Locked house"                   },
-  { value: "evicted",               label: "Evicted"                        },
-  { value: "eviction_notice",       label: "Eviction notice served"         },
-  { value: "undertaking_signed",    label: "Undertaking letter signed"      },
-  { value: "undertaking_delivered", label: "Undertaking letter delivered"   },
-  { value: "seized_item",           label: "Seized an item"                 },
-]
-
-const DEFAULT_FILTERS: FiltersState = {
-  paymentStatus: [],
-  occupancy: "all",
-  vacatedSub: "any",
-  officers: [],
-  rent: "all",
-  owing: "all",
-  action: "all",
-}
-
-// ── Sub-components ───────────────────────────────────────────────────────────
-
-function Label({ children }: { readonly children: React.ReactNode }) {
+function SectionLabel({ children }: { readonly children: React.ReactNode }) {
   return (
-    <span className="text-[10px] font-semibold tracking-[0.12em] uppercase text-[#9a9080] mb-2 block">
+    <Label className="block text-[10px] font-semibold tracking-[0.13em] uppercase text-[#9a9080] mb-2.5 select-none">
       {children}
-    </span>
+    </Label>
   )
 }
-
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  readonly active: boolean
-  readonly onClick: () => void
-  readonly children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center gap-1.5 h-7 px-3 rounded-full border text-[12px] font-medium transition-colors ${
-        active
-          ? "border-[#6b6455] bg-[#ede8df] text-[#1a1a14]"
-          : "border-[#ddd8ce] bg-transparent text-[#6b6455] hover:bg-[#ede8df]"
-      }`}
-    >
-      {children}
-    </button>
-  )
-}
-
-function StyledSelect({
-  value,
-  onChange,
-  options,
-}: {
-  readonly value: string
-  readonly onChange: (v: string) => void
-  readonly options: { value: string; label: string }[]
-}) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-8 px-3 pr-8 rounded-lg border border-[#ddd8ce] bg-[#ede8df] text-[12px] font-medium text-[#1a1a14] appearance-none cursor-pointer hover:border-[#6b6455] focus:outline-none focus:border-[#508d4e] transition-colors w-full"
-      style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9080' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 10px center",
-      }}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
-  )
-}
-
-// ── Main component ────────────────────────────────────────────────────────────
 
 export function Filters({ onFilterChange }: FiltersProps) {
   const [filters, setFilters] = useState<FiltersState>(DEFAULT_FILTERS)
@@ -159,130 +57,129 @@ export function Filters({ onFilterChange }: FiltersProps) {
     update({ officers: next })
   }
 
-  const showVacatedPanel = filters.occupancy === "vacated"
-
   return (
-    <div className="flex flex-col gap-5 pt-6">
+    <div className="mt-6 rounded-xl border border-[#e0dbd1] bg-white p-[18px_20px] grid gap-3.5">
 
-      {/* Row 1: Payment status + Occupancy */}
-      <div className="flex gap-10 flex-wrap">
+      {/* ── Row 1: Payment status + Occupancy ──────────────────────────────── */}
+      <div className="flex items-start gap-6 flex-wrap">
 
         {/* Payment status */}
-        <div>
-          <Label>Payment status</Label>
+        <div className="flex-1 min-w-0">
+          <SectionLabel>Payment status</SectionLabel>
           <div className="flex items-center gap-2 flex-wrap">
-            {PAYMENT_STATUS.map((s) => (
-              <Chip
-                key={s.key}
-                active={filters.paymentStatus.includes(s.key)}
-                onClick={() => togglePayment(s.key)}
-              >
-                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-                {s.label}
-                <span className="text-[11px] text-[#9a9080] font-normal">{s.count}</span>
-              </Chip>
-            ))}
+            {PAYMENT_STATUS.map((s) => {
+              const active = filters.paymentStatus.includes(s.key)
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => togglePayment(s.key)}
+                  className="flex items-center gap-2 h-8 pl-2.5 pr-2 rounded-lg border text-[12px] font-medium transition-all"
+                  style={
+                    active
+                      ? { background: s.bg, borderColor: s.color + "70", color: s.color }
+                      : { background: "#faf8f4", borderColor: "#e8e3d8", color: "#4d5461" }
+                  }
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-full shrink-0 transition-all"
+                    style={{ backgroundColor: active ? s.color : s.color + "55" }}
+                  />
+                  {s.label}
+                  <span
+                    className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+                    style={
+                      active
+                        ? { background: s.color + "22", color: s.color }
+                        : { background: "#ede8df", color: "#9a9080" }
+                    }
+                  >
+                    {s.count}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
         {/* Occupancy */}
-        <div className="flex flex-col">
-          <Label>Occupancy</Label>
+        <div className="shrink-0">
+          <SectionLabel>Occupancy</SectionLabel>
           <div className="flex flex-col gap-3">
-            {/* Toggle */}
-            <div
-              role="group"
+            <fieldset
               aria-label="Filter by occupancy"
-              className="flex items-center rounded-lg border border-[#ddd8ce] bg-[#ede8df] p-0.5 gap-0.5 self-start"
+              className="flex items-center rounded-lg border border-[#ddd8ce] bg-transparent p-0.5 gap-0.5 self-start"
             >
-              {(
-                [
-                  { key: "all",      label: "All",          count: 150 },
-                  { key: "occupied", label: "Still living in", count: 144 },
-                  { key: "vacated",  label: "Moved out",    count: 6   },
-                ] as const
-              ).map((opt) => (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => update({ occupancy: opt.key, vacatedSub: "any" })}
-                  className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-medium transition-colors ${
-                    filters.occupancy === opt.key
-                      ? "bg-white text-[#1a1a14] shadow-sm"
-                      : "text-[#6b6455] hover:text-[#1a1a14]"
-                  }`}
-                >
-                  {opt.label}
-                  <span className={`text-[11px] ${filters.occupancy === opt.key ? "text-[#9a9080]" : "text-[#b3a898]"}`}>
-                    {opt.count}
-                  </span>
-                </button>
-              ))}
-            </div>
+              {OCCUPANCY_OPTIONS.map((opt) => {
+                const active = filters.occupancy === opt.key
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => update({ occupancy: opt.key, vacatedSub: "any" })}
+                    className={`flex items-center gap-1.5 h-7 px-3 rounded-md text-[12px] font-medium transition-all ${
+                      active
+                        ? "bg-[#1a1a14] text-white"
+                        : "text-[#6b6455] hover:text-[#1a1a14]"
+                    }`}
+                  >
+                    {opt.label}
+                    <span className={`text-[11px] font-semibold ${active ? "text-white/60" : "text-[#b3a898]"}`}>
+                      {opt.count}
+                    </span>
+                  </button>
+                )
+              })}
+            </fieldset>
 
             {/* Vacated sub-panel */}
-            {showVacatedPanel && (
-              <div className="flex flex-col gap-2 pl-0.5">
+            {filters.occupancy === "vacated" && (
+              <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-[#9a9080] font-medium">Of those who moved out…</span>
-                  <button
+                  <span className="text-[11px] font-medium text-[#9a9080]">Of those who moved out…</span>
+                  <Button
                     type="button"
+                    size="sm"
                     onClick={() => update({ vacatedSub: "any" })}
-                    className={`h-6 px-2.5 rounded-md text-[11px] font-medium border transition-colors ${
+                    className={`h-5 px-2 rounded-md text-[10px] font-semibold tracking-wide ${
                       filters.vacatedSub === "any"
-                        ? "border-[#6b6455] bg-[#ede8df] text-[#1a1a14]"
-                        : "border-[#ddd8ce] text-[#9a9080] hover:bg-[#ede8df]"
+                        ? "bg-[#1a1a14] text-white hover:bg-[#1a1a14]"
+                        : "bg-transparent border border-[#ddd8ce] text-[#9a9080] hover:bg-transparent hover:text-[#1a1a14]"
                     }`}
                   >
-                    All
-                  </button>
+                    ALL
+                  </Button>
                 </div>
-                <div className="flex gap-2">
-                  {/* Before lease expired */}
-                  <button
-                    type="button"
-                    onClick={() => update({ vacatedSub: "early" })}
-                    className={`flex flex-col gap-1.5 p-3 rounded-xl border text-left w-52 transition-colors ${
-                      filters.vacatedSub === "early"
-                        ? "border-[#c57a3f] bg-[#fdf3e8]"
-                        : "border-[#ddd8ce] bg-[#ede8df] hover:border-[#c57a3f]/60"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[13px]">⚠</span>
-                      <span className="text-[12px] font-semibold text-[#1a1a14]">Before lease expired</span>
-                    </div>
-                    <p className="text-[11px] text-[#9a9080] leading-snug">
-                      Left while still contractually obligated · typically skips or evictions
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[13px] font-semibold text-[#1a1a14]">6</span>
-                      <span className="text-[11px] text-[#c57a3f] font-medium">₵70k owed</span>
-                    </div>
-                  </button>
 
-                  {/* After lease expired */}
-                  <button
-                    type="button"
-                    onClick={() => update({ vacatedSub: "late" })}
-                    className={`flex flex-col gap-1.5 p-3 rounded-xl border text-left w-52 transition-colors ${
-                      filters.vacatedSub === "late"
-                        ? "border-[#3d5a3a] bg-[#eef5ee]"
-                        : "border-[#ddd8ce] bg-[#ede8df] hover:border-[#3d5a3a]/60"
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[13px]">✓</span>
-                      <span className="text-[12px] font-semibold text-[#1a1a14]">After lease expired</span>
-                    </div>
-                    <p className="text-[11px] text-[#9a9080] leading-snug">
-                      Lease ran its course · normal end-of-term exits
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[13px] font-semibold text-[#1a1a14]">0</span>
-                      <span className="text-[11px] text-[#3d5a3a] font-medium">nothing owed</span>
-                    </div>
-                  </button>
+                <div className="flex gap-2.5">
+                  {VACATED_CARDS.map((card) => {
+                    const active = filters.vacatedSub === card.key
+                    return (
+                      <button
+                        key={card.key}
+                        type="button"
+                        onClick={() => update({ vacatedSub: card.key })}
+                        className="flex flex-col gap-2 p-3.5 rounded-xl border text-left w-[200px] transition-all"
+                        style={
+                          active
+                            ? { borderColor: card.activeColor.border, background: card.activeColor.bg }
+                            : { borderColor: "#ddd8ce", background: "white" }
+                        }
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base leading-none">{card.icon}</span>
+                          <span className="text-[12px] font-semibold text-[#1a1a14]">{card.label}</span>
+                        </div>
+                        <p className="text-[11px] text-[#9a9080] leading-snug">{card.desc}</p>
+                        <div className="flex items-baseline gap-1.5 mt-0.5">
+                          <span className="text-[15px] font-semibold text-[#1a1a14]">{card.count}</span>
+                          <span className="text-[11px] font-medium" style={{ color: card.activeColor.text }}>
+                            {card.owed}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -290,50 +187,76 @@ export function Filters({ onFilterChange }: FiltersProps) {
         </div>
       </div>
 
-      {/* Row 2: Officer chips */}
+      {/* ── Row 2: Officer assigned ─────────────────────────────────────────── */}
       <div>
-        <Label>Officer assigned</Label>
+        <SectionLabel>Officer assigned</SectionLabel>
         <div className="flex items-center gap-2 flex-wrap">
-          {OFFICERS.map((name) => (
-            <Chip
-              key={name}
-              active={filters.officers.includes(name)}
-              onClick={() => toggleOfficer(name)}
-            >
-              {name}
-            </Chip>
-          ))}
+          {OFFICERS.map((name) => {
+            const active = filters.officers.includes(name)
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => toggleOfficer(name)}
+                className={`h-8 px-3 rounded-lg border text-[12px] font-medium transition-all ${
+                  active
+                    ? "border-[#508d4e70] bg-[#eef4ee] text-[#3d5a3a]"
+                    : "border-[#e8e3d8] bg-[#faf8f4] text-[#4d5461] hover:border-[#c9c3b8]"
+                }`}
+              >
+                {name}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* Row 3: Selects */}
-      <div className="flex gap-4 flex-wrap">
-        <div className="flex flex-col min-w-[180px]">
-          <Label>Monthly rent</Label>
-          <StyledSelect
-            value={filters.rent}
-            onChange={(v) => update({ rent: v })}
-            options={RENT_OPTIONS}
-          />
-        </div>
-        <div className="flex flex-col min-w-[200px]">
-          <Label>Outstanding balance</Label>
-          <StyledSelect
-            value={filters.owing}
-            onChange={(v) => update({ owing: v })}
-            options={OWING_OPTIONS}
-          />
-        </div>
-        <div className="flex flex-col min-w-[240px]">
-          <Label>Action taken by officers</Label>
-          <StyledSelect
-            value={filters.action}
-            onChange={(v) => update({ action: v })}
-            options={ACTION_OPTIONS}
-          />
-        </div>
-      </div>
+      {/* ── Row 3: Selects ──────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-3">
 
+        <div>
+          <SectionLabel>Monthly rent</SectionLabel>
+          <Select value={filters.rent} onValueChange={(v) => update({ rent: v })}>
+            <SelectTrigger className="h-8 w-full text-[12px] font-medium bg-white border-[#ddd8ce] text-[#1a1a14] focus:ring-0 focus:ring-offset-0 focus:border-[#508d4e] hover:border-[#c9c3b8]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RENT_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value} className="text-[12px]">{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <SectionLabel>Outstanding balance</SectionLabel>
+          <Select value={filters.owing} onValueChange={(v) => update({ owing: v })}>
+            <SelectTrigger className="h-8 w-full text-[12px] font-medium bg-white border-[#ddd8ce] text-[#1a1a14] focus:ring-0 focus:ring-offset-0 focus:border-[#508d4e] hover:border-[#c9c3b8]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {OWING_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value} className="text-[12px]">{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <SectionLabel>Action taken by officers</SectionLabel>
+          <Select value={filters.action} onValueChange={(v) => update({ action: v })}>
+            <SelectTrigger className="h-8 w-full text-[12px] font-medium bg-white border-[#ddd8ce] text-[#1a1a14] focus:ring-0 focus:ring-offset-0 focus:border-[#508d4e] hover:border-[#c9c3b8]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ACTION_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value} className="text-[12px]">{o.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+      </div>
     </div>
   )
 }
