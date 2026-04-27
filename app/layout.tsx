@@ -1,15 +1,25 @@
-import { Geist, Geist_Mono, Inter } from "next/font/google"
+import localFont from "next/font/local"
+import type { Metadata } from "next"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'})
-
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
 })
+
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
+})
+
+export const metadata: Metadata = {
+  title: "Debt Recovery",
+  description: "",
+}
 
 export default function RootLayout({
   children,
@@ -20,7 +30,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
       <body>
         <ThemeProvider>{children}</ThemeProvider>
